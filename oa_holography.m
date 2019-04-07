@@ -12,8 +12,8 @@
 %% Reading in simulated object
 I0=imread('airplane.jpg'); % 256x256 pixels, 8bit image
 I0=double(rgb2gray(I0));
-figure()
-imshow(mat2gray(I0));
+% figure()
+% imshow(mat2gray(I0));
 axis off
 %% parameter setup 
 % D=.01; % [meters]
@@ -34,7 +34,7 @@ c=1:pad1*M;
 [C, R]=meshgrid(c, r);
 I=zeros(5*M);
 % I(513:768,513:768)=I0;
-I((M*pad1/2-length(I0)/2+1):(M*pad1/2+length(I0)/2),(M*pad1/2-length(I0)/2+1):(M*pad1/2+length(I0)/2))=I0; 
+I((M*pad1/2-length(I0)/2+1):(M*pad1/2+length(I0)/2),(M*pad1/2-length(I0)/2+1):(M*pad1/2+length(I0)/2))=I0;
 A0=fftshift(ifft2(fftshift(I)));
 deltaf=1/pad1/M/dx;
 p=exp(-2i*pi*z.*((1/w)^2-((R-M*pad1/2-1).*deltaf).^2-((C-M*pad1/2-1).*deltaf).^2).^0.5);
