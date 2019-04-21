@@ -28,7 +28,7 @@ w=633e-8; % wavelength (633 nm) %..actually 63.3 nm
 % w=633e-9;
 z=20; % propagation distance
 % z=4*dx*(D+M*dx)/w % eq 4.50
-angle=0.3; % reference beam angle; degree
+theta=0.3; % reference beam angle; degree
 % angle=asind(3*w/(8*dx)) % eq 4.51
 res=w*z/M/dx % sampling distance (smallest resolvable element)
 %% Showing CCD FOV

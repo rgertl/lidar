@@ -9,13 +9,16 @@ close all
 I0=imread('airplane.jpg'); % 256x256 pixels, 8bit image
 I0=double(rgb2gray(I0));
 
-%% Parameter Setup 
+%% Parameter Setup
 % length in cm
-M=256; % # pixels
+M=256; % # pixels, 1D
 dx=10e-4; % pixel pitch (10 um)
-w=633e-8; % wavelength 
+w=633e-8; % wavelength (633 nm) %..actually 63.3 nm
+% w=633e-9;
 z=20; % propagation distance
+% z=4*dx*(D+M*dx)/w % eq 4.50
 theta=0.4; % reference beam angle; degree
+% angle=asind(3*w/(8*dx)) % eq 4.51
 res=w*z/M/dx % sampling distance (smallest resolvable element)
 %% Showing CCD FOV
 I_FOV=zeros(M);
@@ -56,10 +59,12 @@ SP=fftshift(fft2(fftshift(IH)));
 figure; imshow(100.*mat2gray(abs(SP)));title('Hologram spectrum')
 %% Windowing
 hold on
-W=30:200; % Window
+W=30:199; % Window
 rectangle('Position',[W(1) W(1) W(length(W))-W(1) W(length(W))-W(1)],'EdgeColor','r');
 SP_W=SP(W,W);
-IH_W=fftshift(ifft2(fftshift(SP_W)));
+SP_WP=zeros(M);
+SP_WP((M/2-length(SP_W)/2+1):(M/2+length(SP_W)/2),(M/2-length(SP_W)/2+1):(M/2+length(SP_W)/2))=SP_W;
+IH_W=fftshift(fft2(fftshift(SP_WP)));
 figure; imshow(mat2gray(abs(IH_W))); title('Filtered Hologram')
 
 %% Reconstruction (Fresnel diffraction)
@@ -68,10 +73,10 @@ figure; imshow(mat2gray(abs(IH_W))); title('Filtered Hologram')
 % c3=1:pad3*M;
 % [C3, R3]=meshgrid(c3, r3);
 % THOR=((R3-M*pad3/2-1).^2+(C3-M*pad3/2-1).^2).^0.5;
-r3=W;
-c3=W;
+r3=1:length(IH_W);
+c3=1:length(IH_W);
 [C3, R3]=meshgrid(c3, r3);
-THOR=((R3-length(IH_W)/2-1).^2+(C3-length(IH_W)/2-1).^2).^0.5;
+THOR=(R3.^2+C3.^2).^0.5;
 RR=THOR.*dx/4;
 QP=exp(1i*pi/w/z.*(RR.^2)); % Quadratic phase exponential
 FTS=fftshift(fft2(fftshift(IH_W.*QP))); % Goodman eq 4-17

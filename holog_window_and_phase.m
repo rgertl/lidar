@@ -64,7 +64,7 @@ rectangle('Position',[W(1) W(1) W(length(W))-W(1) W(length(W))-W(1)],'EdgeColor'
 SP_W=SP(W,W);
 % padding windowed image term
 pad_w=2;
-SP_WP=zeros(pad_w*M); % padding=2
+SP_WP=zeros(pad_w*M); % padded windowed spectrum
 SP_WP((pad_w*M/2-length(SP_W)/2+1):(pad_w*M/2+length(SP_W)/2),(pad_w*M/2-length(SP_W)/2+1):(pad_w*M/2+length(SP_W)/2))=SP_W;
 IH_W=fftshift(ifft2(fftshift(SP_WP)));
 % IH_W=IH_W((M*pad_w/2-M/2+1):(M*pad_w/2+M/2),(M*pad_w/2-M/2+1):(M*pad_w/2+M/2)); % reducing windowed hologram back to M x M
