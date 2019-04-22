@@ -20,6 +20,7 @@ z=20; % propagation distance
 theta=0.4; % reference beam angle; degree
 % angle=asind(3*w/(8*dx)) % eq 4.51
 res=w*z/M/dx % sampling distance (smallest resolvable element)
+D=72*dx;
 %% Showing CCD FOV
 I_FOV=zeros(M);
 I_FOV((M/2-length(I0)/2+1):(M/2+length(I0)/2),(M/2-length(I0)/2+1):(M/2+length(I0)/2))=I0;
@@ -59,16 +60,18 @@ SP=fftshift(fft2(fftshift(IH)));
 figure; imshow(100.*mat2gray(abs(SP)));title('Hologram spectrum')
 %% Windowing
 hold on
-W=30:199; % Window
+W=51:180; % Window
 rectangle('Position',[W(1) W(1) W(length(W))-W(1) W(length(W))-W(1)],'EdgeColor','r');
 SP_W=SP(W,W);
 % padding windowed image term
 pad_w=2;
 SP_WP=zeros(pad_w*M); % padded windowed spectrum
 SP_WP((pad_w*M/2-length(SP_W)/2+1):(pad_w*M/2+length(SP_W)/2),(pad_w*M/2-length(SP_W)/2+1):(pad_w*M/2+length(SP_W)/2))=SP_W;
+figure; imshow(10*mat2gray(abs(SP_WP))); title('Filtered Image Term (1st Order)')
 IH_W=fftshift(ifft2(fftshift(SP_WP)));
-% IH_W=IH_W((M*pad_w/2-M/2+1):(M*pad_w/2+M/2),(M*pad_w/2-M/2+1):(M*pad_w/2+M/2)); % reducing windowed hologram back to M x M
+% IH_PHASE=IH_W((M*pad_w/2-M/2+1):(M*pad_w/2+M/2),(M*pad_w/2-M/2+1):(M*pad_w/2+M/2)); % reducing windowed hologram back to M x M
 figure; imshow(mat2gray(abs(IH_W))); title('Filtered Hologram')
+% figure; imshow(mat2gray(abs(IH_PHASE))); title('Filtered Hologram, M x M')
 
 %% Reconstruction (Fresnel diffraction)
 % pad3=2;
@@ -85,22 +88,36 @@ QP=exp(1i*pi/w/z.*(RR.^2)); % Quadratic phase exponential
 QP_factor=1;
 QP_factor=exp(1i*2*pi*z/w)*exp(1i*pi*(R3.^2+C3.^2)/w/z)/1i/w/z;
 FTS=QP_factor.*fftshift(fft2(fftshift(IH_W.*QP))); % Goodman eq 4-17
-% FTS=fftshift(fft2(fftshift(IH.*QP))); % Goodman eq 4-17
 I2=FTS.*conj(FTS);
 figure; imshow(5.*mat2gray(I2));
 title('Reconstructed image')
 axis off
+
 %% Extracting Phase
+% Sfreq = (-1/2:1/(pad_w*M):1/2-1/(pad_w*M));
+% [Sx,Sy] = meshgrid(Sfreq,Sfreq); 
 WRAPPED_PHASE=angle(IH_W);
 UNWRAPPED_PHASE=unwrap(WRAPPED_PHASE,[],1);
 UNWRAP_PHASE=unwrap(UNWRAPPED_PHASE,[],2);
 figure;subplot(221)
 mesh(x,y,PHASE);title('Original phase (radian)')
 subplot(223); 
-mesh(r3,c3,WRAPPED_PHASE);title('Recovered Phase (Wrapped)')
+mesh(C3,R3,WRAPPED_PHASE);title('Recovered Phase (Wrapped)')
 subplot(224); 
-mesh(r3,c3,UNWRAPPED_PHASE);title('Recovered Phase (Unwrapped)')
+mesh(C3,R3,UNWRAPPED_PHASE);title('Recovered Phase (Unwrapped)')
 
+%% Extracting Phase
+% % Sfreq = (-1/2:1/(pad_w*M):1/2-1/(pad_w*M));
+% % [Sx,Sy] = meshgrid(Sfreq,Sfreq); 
+% WRAPPED_PHASE=angle(IH_PHASE);
+% UNWRAPPED_PHASE=unwrap(WRAPPED_PHASE,[],1);
+% UNWRAP_PHASE=unwrap(UNWRAPPED_PHASE,[],2);
+% figure;subplot(221)
+% mesh(x,y,PHASE);title('Original phase (radian)')
+% subplot(223); 
+% mesh(x,y,WRAPPED_PHASE);title('Recovered Phase (Wrapped)')
+% subplot(224); 
+% mesh(x,y,UNWRAPPED_PHASE);title('Recovered Phase (Unwrapped)')
 %% Other Figures
 figure(); subplot(221)
 imshow(mat2gray(abs(I_FOV))); title('CCD FOV (Aimed at Target)')
