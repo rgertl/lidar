@@ -31,6 +31,10 @@ z=20; % propagation distance
 theta=0.3; % reference beam angle; degree
 % angle=asind(3*w/(8*dx)) % eq 4.51
 res=w*z/M/dx % sampling distance (smallest resolvable element)
+%% Noise terms
+%"real-valued, zero-mean, unit-variance Gaussian random numbers"
+N1 = normrnd(0,1);
+N2 = normrnd(0,1);
 %% Showing CCD FOV
 I_FOV=zeros(M);
 I_FOV((M/2-length(I0)/2+1):(M/2+length(I0)/2),(M/2-length(I0)/2+1):(M/2+length(I0)/2))=I0;
