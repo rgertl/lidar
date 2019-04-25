@@ -21,6 +21,10 @@ theta=0.4; % reference beam angle; degree
 % angle=asind(3*w/(8*dx)) % eq 4.51
 res=w*z/M/dx % sampling distance (smallest resolvable element)
 D=72*dx;
+snr=.1; % White gaussian noise
+G_AD=9.76; % e-/px (Gain)
+F_Ill=1; % e-/px
+Ref_Ill=1; % e-/px
 %% Showing CCD FOV
 I_FOV=zeros(M);
 I_FOV((M/2-length(I0)/2+1):(M/2+length(I0)/2),(M/2-length(I0)/2+1):(M/2+length(I0)/2))=I0;
@@ -50,9 +54,11 @@ Az2=zeros(pad2*M);
 Az2((M*pad2/2-M/2+1):(M*pad2/2+M/2),(M*pad2/2-M/2+1):(M*pad2/2+M/2))=Az;
 EOf=fftshift(fft2(fftshift(Az2))); % OBJ field at CCD (real domain)
 AV=(min(min(abs(EOf)))+max(max(abs(EOf))))/2; % ref wave amplitude
+EOf=(F_Ill/AV)*EOf; % Scale amplitude to 400 e-/px
+AV=(min(min(abs(EOf)))+max(max(abs(EOf))))/2; % ref wave amplitude
 [C2, R2]=meshgrid(c2, r2);
-Ref=AV*exp(1i*2*pi*sind(theta)*dx/4.*(R2-M*pad2/2-1)/w+1i*2*pi*sind(theta)*dx/4.*(C2-M*pad2/2-1)/w); % eq 3.5a - DH textbook
-IH=(EOf+Ref).*conj(EOf+Ref); % |F+R|^2
+Ref=Ref_Ill*exp(1i*2*pi*sind(theta)*dx/4.*(R2-M*pad2/2-1)/w+1i*2*pi*sind(theta)*dx/4.*(C2-M*pad2/2-1)/w); % eq 3.5a - DH textbook, with scaled amplitude set to 32000 e-/px
+IH=(EOf+Ref).*conj(EOf+Ref)/G_AD+awgn(real(Ref),snr,'measured')/G_AD; % |F+R|^2 + noise
 scale=.5; % pad3/pad2
 IH=IH((M*pad2/2-M*scale*pad2/2+1):(M*pad2/2+M*scale*pad2/2),(M*pad2/2-M*scale*pad2/2+1):(M*pad2/2+M*scale*pad2/2));
 figure; imshow(mat2gray(IH)); title('Hologram')

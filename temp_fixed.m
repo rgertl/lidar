@@ -1,6 +1,7 @@
 format compact
 close all
 clear all
+clc
 %% Reading in simulated object
 I0=double(imread('F-16_250px.jpg')); % 400x400 pixels
 % I0=double(rgb2gray(I0));
@@ -16,6 +17,11 @@ theta=4.1; % reference beam angle; degree
 [x,y]=meshgrid(1:length(I0),1:length(I0));
 PHASE=15*sin(((x-200).^2+(y-225).^2)/10000)+0.002*((x-37).^2+(y-100).^2);
 I0=I0.*exp(1i*PHASE);
+%% Noise
+snr=.1; % White gaussian noise
+G_AD=40000/(2^9); % e-/px (Gain)
+F_Ill=1; % 400e-/px
+Ref_Ill=80; % 32000e-/px
 %% Showing CCD FOV
 I_FOV=zeros(M);
 I_FOV((M/2-length(I0)/2+1):(M/2+length(I0)/2),(M/2-length(I0)/2+1):(M/2+length(I0)/2))=I0;
@@ -45,9 +51,10 @@ Az2=zeros(pad2*M);
 Az2((M*pad2/2-M/2+1):(M*pad2/2+M/2),(M*pad2/2-M/2+1):(M*pad2/2+M/2))=Az;
 EOf=fftshift(fft2(fftshift(Az2))); % OBJ field at CCD (real domain)
 AV=(min(min(abs(EOf)))+max(max(abs(EOf))))/2; % ref wave amplitude
+EOf=(F_Ill/AV)*EOf; % Scale amplitude to 400 e-/px
 [C2, R2]=meshgrid(c2, r2);
-Ref=AV*exp(1i*2*pi*sind(theta)*dx/4.*(R2-M*pad2/2-1)/w+1i*2*pi*sind(theta)*dx/4.*(C2-M*pad2/2-1)/w); % eq 3.5a - DH textbook
-IH=(EOf+Ref).*conj(EOf+Ref); % |F+R|^2
+Ref=Ref_Ill*exp(1i*2*pi*sind(theta)*dx/4.*(R2-M*pad2/2-1)/w+1i*2*pi*sind(theta)*dx/4.*(C2-M*pad2/2-1)/w); % eq 3.5a - DH textbook, with scaled amplitude set to 32000 e-/px
+IH=(EOf+Ref).*conj(EOf+Ref)/G_AD+awgn(real(Ref),snr,'measured')/G_AD; % |F+R|^2 + noise
 scale=.5; % pad3/pad2
 IH=IH((M*pad2/2-M*scale*pad2/2+1):(M*pad2/2+M*scale*pad2/2),(M*pad2/2-M*scale*pad2/2+1):(M*pad2/2+M*scale*pad2/2));
 figure; imshow(mat2gray(IH)); title('Hologram')
@@ -55,7 +62,10 @@ SP=fftshift(fft2(fftshift(IH)));
 figure; imshow(500.*mat2gray(abs(SP)));title('Hologram spectrum')
 %% Windowing
 hold on
-W=150:321; % Window
+Window1=150;%200;%180;%150;
+Window2=321;%247;%271;%321;
+WindowPixels=(Window2-Window1)^2;
+W=Window1:Window2; % Window
 rectangle('Position',[W(1) W(1) W(length(W))-W(1) W(length(W))-W(1)],'EdgeColor','r');
 SP_W=SP(W,W);
 % padding windowed image term
@@ -80,7 +90,9 @@ QP_factor=exp(1i*2*pi*z/w)*exp(1i*pi*((C3-M*pad_w/2-1).^2+(R3-M*pad_w/2-1).^2)/w
 FTS=QP_factor.*fftshift(fft2(fftshift(IH_W.*QP))); % Goodman eq 4-17
 I2=FTS.*conj(FTS);
 figure; imshow(5.*mat2gray(I2));
-title('Reconstructed image')
+title(['Reconstructed image (Illumination ratio, Ref:F=' num2str(Ref_Ill/F_Ill) ':1)'])
+%title(['Reconstructed image (Window Pixels=' num2str(WindowPixels) ')'])
+%title('Reconstructed image')
 axis off
 
 %% Extracting Phase
