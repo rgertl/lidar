@@ -18,10 +18,11 @@ theta=4.1; % reference beam angle; degree
 PHASE=15*sin(((x-200).^2+(y-225).^2)/10000)+0.002*((x-37).^2+(y-100).^2);
 I0=I0.*exp(1i*PHASE);
 %% Noise
-snr=.1; % White gaussian noise
-G_AD=40000/(2^9); % e-/px (Gain)
-F_Ill=1; % 400e-/px
-Ref_Ill=80; % 32000e-/px
+snr=.01; % White gaussian noise
+wellDepth=40000;
+G_AD=wellDepth/M % e-/px (Gain)
+F_Ill=1 % 400e-/px
+Ref_Ill=80 % 32000e-/px
 %% Showing CCD FOV
 I_FOV=zeros(M);
 I_FOV((M/2-length(I0)/2+1):(M/2+length(I0)/2),(M/2-length(I0)/2+1):(M/2+length(I0)/2))=I0;
@@ -54,7 +55,8 @@ AV=(min(min(abs(EOf)))+max(max(abs(EOf))))/2; % ref wave amplitude
 EOf=(F_Ill/AV)*EOf; % Scale amplitude to 400 e-/px
 [C2, R2]=meshgrid(c2, r2);
 Ref=Ref_Ill*exp(1i*2*pi*sind(theta)*dx/4.*(R2-M*pad2/2-1)/w+1i*2*pi*sind(theta)*dx/4.*(C2-M*pad2/2-1)/w); % eq 3.5a - DH textbook, with scaled amplitude set to 32000 e-/px
-IH=(EOf+Ref).*conj(EOf+Ref)/G_AD+awgn(real(Ref),snr,'measured')/G_AD; % |F+R|^2 + noise
+%IH=(EOf+Ref).*conj(EOf+Ref)/G_AD+awgn(real(Ref),snr,'measured')/G_AD; % |F+R|^2 + noise
+IH=(EOf+Ref).*conj(EOf+Ref)/G_AD+awgn(abs(Ref),snr)/G_AD; % |F+R|^2 + noise
 scale=.5; % pad3/pad2
 IH=IH((M*pad2/2-M*scale*pad2/2+1):(M*pad2/2+M*scale*pad2/2),(M*pad2/2-M*scale*pad2/2+1):(M*pad2/2+M*scale*pad2/2));
 figure; imshow(mat2gray(IH)); title('Hologram')
